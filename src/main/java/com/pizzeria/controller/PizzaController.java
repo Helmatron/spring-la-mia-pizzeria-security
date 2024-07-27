@@ -13,6 +13,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+
 import com.pizzeria.model.Ingredienti;
 import com.pizzeria.model.Pizza;
 import com.pizzeria.model.SpecialOffer;
@@ -36,10 +39,17 @@ public class PizzaController {
 	private IngredientiRepository ingredientRepository;
 
 	/*
-	 * VIEW INDEX PIZZERIA
+	 * VIEW INDEX PIZZERIA E ACCESSO SICUREZZA
 	 */
 	@GetMapping
 	public String index(Model model) {
+		
+		// Verifica accesso utente e reindirizza se utente non verificato
+		   Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+	        if (authentication == null || !authentication.isAuthenticated() || authentication.getPrincipal().equals("anonymousUser")) {
+	            return "redirect:/login";
+	        }
+	        
 		List<Pizza> pizze = pizzaRepository.findAll();
 		model.addAttribute("list", pizze);
 		List<Ingredienti> ingredient = ingredientRepository.findAllByOrderByNameAsc();
@@ -104,11 +114,11 @@ public class PizzaController {
 			return "pizze/nuova_pizza";
 		}
 		if (ingredientId != null) {
-	        List<Ingredienti> selectedIngredients = ingredientRepository.findAllById(ingredientId);
-	        formPizza.setIngredienti(selectedIngredients);
-	    } else {
-	    	formPizza.setIngredienti(null);
-	    }
+			List<Ingredienti> selectedIngredients = ingredientRepository.findAllById(ingredientId);
+			formPizza.setIngredienti(selectedIngredients);
+		} else {
+			formPizza.setIngredienti(null);
+		}
 		pizzaRepository.save(formPizza);
 		return "redirect:/pizze/lista_pizze";
 
